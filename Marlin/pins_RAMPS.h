@@ -71,9 +71,9 @@
 //
 #define X_MIN_PIN           3
 #ifndef X_MAX_PIN
-  #define X_MAX_PIN         2
+  #define X_MAX_PIN         //2
 #endif
-#define Y_MIN_PIN          14
+#define Y_MIN_PIN          2//14
 #define Y_MAX_PIN          15
 #define Z_MIN_PIN          18
 #define Z_MAX_PIN          19

@@ -734,6 +734,24 @@
 
 #endif // USE_MARLINSERIAL && (UBRRH || UBRR0H || UBRR1H || UBRR2H || UBRR3H)
 
+#if defined(ENABLE_INTERNAL_SERIAL)//AlfiQue
+
+    ISR(SERIAL_REGNAME(USART,ENABLE_INTERNAL_SERIAL,_RX_vect)) {
+      MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>>::store_rxd_char();
+    }
+
+    ISR(SERIAL_REGNAME(USART,ENABLE_INTERNAL_SERIAL,_UDRE_vect)) {
+      MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>>::_tx_udr_empty_irq();
+    }
+
+    // Preinstantiate
+    template class MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>>;
+
+    // Instantiate
+    MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>> internalSerial;
+
+#endif//AlfiQue
+
 // For AT90USB targets use the UART for BT interfacing
 #if !USE_MARLINSERIAL && ENABLED(BLUETOOTH)
   HardwareSerial bluetoothSerial;

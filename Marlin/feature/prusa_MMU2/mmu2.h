@@ -57,32 +57,36 @@ class MMU2 {
         void init();
         void reset();
         void mmuLoop();
+        void toolChange(uint8_t index);
 
     private:
         bool rx_str_P(const char* str);
         void tx_str_P(const char* str);
         void tx_printf_P(const char* format, ...);
         void clear_rx_buffer();
-        bool rx_ok();
 
+        bool rx_ok();
         bool rx_start();
+        void checkVersion();
         
         void command(uint8_t cmd);
-        bool get_response(void);
+        bool getResponse(void);
         void load_to_nozzle();
 
+        void manageResponse(bool move_axes, bool turn_off_nozzle);
         
-        bool mmu_enabled = false;
-        bool mmu_ready = false;
-        uint8_t mmu_cmd = 0;
-        int8_t mmu_state = 0;
-        uint8_t mmu_extruder = 0;
+        bool enabled = false;
+        bool ready = false;
+        bool mmu_print_saved = false;
+        uint8_t cmd = 0;
+        int8_t state = 0;
+        uint8_t extruder = 0;
         uint8_t tmp_extruder = 0;
-        int8_t mmu_finda = -1;
-        int16_t mmu_version = -1;
-        int16_t mmu_buildnr = -1;
-        uint32_t mmu_last_request = 0;
-        uint32_t mmu_last_response = 0;
+        int8_t finda = -1;
+        int16_t version = -1;
+        int16_t buildnr = -1;
+        uint32_t last_request = 0;
+        uint32_t last_response = 0;
         char rx_buffer[16];
         char tx_buffer[16];
 

@@ -1653,18 +1653,27 @@
 
 /**
  * Prusa MMU2
+ * 
+ * Requires NOZZLE_PARK_FEATURE to park print head in case MMU unit fails.
+ * 
  */
 #define PRUSA_MMU2
 
 #ifdef PRUSA_MMU2
   // uart port used for serial communication to MMU
-  #define PRUSA_MMU2_UART 2
+  #define ENABLE_INTERNAL_SERIAL 2
+  #define PRUSA_MMU2_SERIAL internalSerial
+//  #define PRUSA_MMU2_UART Serial2
   // use hardware reset for MMU?
   #define PRUSA_MMU2_HWRESET
   #ifdef PRUSA_MMU2_HWRESET
     // hardware reset pin
     #define PRUSA_MMU2_RST_PIN 23
   #endif
+
+  // enable this option if you power the MMU2 stepper motors with 12V
+  // requires MMU2 Firmware V1.0.2 or later
+  //#define PRUSA_MMU2_MODE_12V
 
   // check MMU2 F.I.N.D.A. probe for filament runout
   #define PRUSA_MMU2_CHECK_FINDA

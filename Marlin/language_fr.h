@@ -391,4 +391,14 @@
   #define MSG_FILAMENT_CHANGE_RESUME_1      _UxGT("Reprise...")
 #endif // LCD_HEIGHT < 4
 
+/**
+ * Prusa MMU2 
+ */
+#ifndef MSG_MMU2_WRONG_FIRMWARE
+  #define MSG_MMU2_WRONG_FIRMWARE               _UxGT("Please update firmware in your MMU2.")
+  #define MSG_MMU2_NOT_RESPONDING               _UxGT("MMU needs user attention.")
+  #define MSG_MMU2_RESUME                       _UxGT("Resuming...")
+#endif
+
+
 #endif // LANGUAGE_FR_H
