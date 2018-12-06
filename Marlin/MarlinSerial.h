@@ -176,22 +176,23 @@
 
 #endif // USE_MARLINSERIAL
 
-#if defined(ENABLE_INTERNAL_SERIAL)//AlfiQue
-  template <uint8_t serial>
-  struct MarlinInternalSerialCfg {
-    static constexpr int PORT               = serial;
-    static constexpr unsigned int RX_SIZE   = RX_BUFFER_SIZE;
-    static constexpr unsigned int TX_SIZE   = TX_BUFFER_SIZE;
-    static constexpr bool XONOFF            = false;
-    static constexpr bool EMERGENCYPARSER   = false;
-    static constexpr bool DROPPED_RX        = false;
-    static constexpr bool RX_OVERRUNS       = false;
-    static constexpr bool RX_FRAMING_ERRORS = false;
-    static constexpr bool MAX_RX_QUEUED     = false;
-  };
-
-  extern MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>> internalSerial;
-#endif//AlfiQue
+//#if defined(ENABLE_INTERNAL_SERIAL)//AlfiQue
+//  template <uint8_t serial>
+//  struct MarlinInternalSerialCfg {
+//    static constexpr int PORT               = serial;
+//    static constexpr unsigned int RX_SIZE   = RX_BUFFER_SIZE;
+//    static constexpr unsigned int TX_SIZE   = TX_BUFFER_SIZE;
+//    static constexpr bool XONOFF            = false;
+//    static constexpr bool EMERGENCYPARSER   = false;
+//    static constexpr bool DROPPED_RX        = false;
+//    static constexpr bool RX_OVERRUNS       = false;
+//    static constexpr bool RX_FRAMING_ERRORS = false;
+//    static constexpr bool MAX_RX_QUEUED     = false;
+//  };
+//
+//template MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>>;
+//  extern MarlinSerial<MarlinInternalSerialCfg<ENABLE_INTERNAL_SERIAL>> internalSerial;
+//#endif//AlfiQue
 
 // Use the UART for Bluetooth in AT90USB configurations
 #if !USE_MARLINSERIAL && ENABLED(BLUETOOTH)

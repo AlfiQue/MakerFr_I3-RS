@@ -47,8 +47,8 @@
 #define MMU_BAUD    115200
 
 
-//HardwareSerial mmuSerial = Serial2;
-#define mmuSerial   PRUSA_MMU2_SERIAL
+HardwareSerial mmuSerial = Serial2;
+//#define mmuSerial   PRUSA_MMU2_SERIAL
 
 
 void MMU2::init() {
