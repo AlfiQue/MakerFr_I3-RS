@@ -1702,12 +1702,11 @@ static_assert(COUNT(sanity_arr_3) <= NUM_AXIS_N, "DEFAULT_MAX_ACCELERATION has t
   #error "POWER_LOSS_RECOVERY currently requires an LCD Controller."
 #endif
 
-/**
+/**AlfiQue
  * Prusa MMU2 feature requires nozzle park
  */
 #if ENABLED(PRUSA_MMU2) && DISABLED(NOZZLE_PARK_FEATURE)
   #error "PRUSA_MMU2 requires NOZZLE_PARK_FEATURE."
-#endif
-
+#endif //AlfiQue
 
 #endif // _SANITYCHECK_H_

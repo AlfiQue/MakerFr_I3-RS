@@ -1661,11 +1661,11 @@
 
 #ifdef PRUSA_MMU2
   // uart port used for serial communication to MMU
-  #define ENABLE_INTERNAL_SERIAL 2
+  #define ENABLE_INTERNAL_SERIAL 3
   //#define PRUSA_MMU2_SERIAL internalSerial
-  #define PRUSA_MMU2_UART Serial2
+  #define PRUSA_MMU2_UART Serial3
   // use hardware reset for MMU?
-  #define PRUSA_MMU2_HWRESET
+  //#define PRUSA_MMU2_HWRESET <- a check AlfiQue
   #ifdef PRUSA_MMU2_HWRESET
     // hardware reset pin
     #define PRUSA_MMU2_RST_PIN 23
