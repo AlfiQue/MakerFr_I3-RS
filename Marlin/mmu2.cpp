@@ -20,18 +20,18 @@
  *
  */
 
-#include "../Marlin.h"
-#include "../MarlinConfig.h"
-#include "../ultralcd.h"
-#include "../buzzer.h"
-#include "../nozzle.h"
-#include "../temperature.h"
-#include "../planner.h"
+#include "Marlin.h"
+#include "MarlinConfig.h"
+#include "ultralcd.h"
+#include "buzzer.h"
+#include "nozzle.h"
+#include "temperature.h"
+#include "planner.h"
 
 #if ENABLED(PRUSA_MMU2)
 
-#include "mmu2.h"
-
+#include "mmu2.h" //AlfiQue
+#include <SoftwareSerial.h> //AlfiQue
 
 #define MMU_TODELAY 100
 #define MMU_TIMEOUT 10
@@ -46,8 +46,14 @@
 
 #define MMU_BAUD    115200
 
+SoftwareSerial mmuSerial(15,14); // RX, TX //AlfiQue
 
-HardwareSerial mmuSerial = Serial2;
+//#define ENABLE_INTERNAL_SERIAL 2
+//#define PRUSA_MMU2_SERIAL internalSerial
+
+
+//HardwareSerial mmuSerial = Serial2;
+//#define mmuSerial SERIAL3;
 //#define mmuSerial   PRUSA_MMU2_SERIAL
 
 
@@ -55,11 +61,19 @@ void MMU2::init() {
 
     #ifdef PRUSA_MMU2_HWRESET
     // TODO use macros for this
-        WRITE(PRUSA_MMU2_RST_PIN, HIGH);
-        SET_OUTPUT(PRUSA_MMU2_RST_PIN);
+        //WRITE(PRUSA_MMU2_RST_PIN, HIGH); //AlfiQue
+        //SET_OUTPUT(PRUSA_MMU2_RST_PIN); //AlfiQue
     #endif
 
     mmuSerial.begin(MMU_BAUD);
+
+    SERIAL_ECHOLNPGM("MMU init");
+    mmuSerial.write("T1");
+    delay(1000);
+    mmuSerial.write("T4");
+    delay(1000);
+    SERIAL_ECHOLNPGM("MMU init end");
+
 
     safe_delay(10);
     reset();
@@ -72,9 +86,9 @@ void MMU2::reset() {
                 SERIAL_ECHOLNPGM("MMU <= reset");
         #endif
 
-        WRITE(PRUSA_MMU2_RST_PIN, LOW);
+        //WRITE(PRUSA_MMU2_RST_PIN, LOW); //AlfiQue
         safe_delay(20);
-        WRITE(PRUSA_MMU2_RST_PIN, HIGH);
+        //WRITE(PRUSA_MMU2_RST_PIN, HIGH); //AlfiQue
 
 }
 
@@ -222,6 +236,7 @@ void MMU2::mmuLoop() {
                     tx_str_P(PSTR("R0\n")); //send recover after eject
                     state = 3; // wait for response
                 }
+                last_cmd = cmd;
                 cmd = MMU_CMD_NONE;
             }
             else if ((last_response + 300) < millis()) //request every 300ms
@@ -229,8 +244,8 @@ void MMU2::mmuLoop() {
                 #ifdef PRUSA_MMU2_DEBUG
 //                    SERIAL_ECHOLNPGM("MMU <= 'P0'");
                 #endif //PRUSA_MMU2_DEBUG
-//                tx_str_P(PSTR("P0\n")); //send 'read finda' request
-//                state = 2;
+                tx_str_P(PSTR("P0\n")); //send 'read finda' request
+                state = 2;
             }
 		    return;
 
@@ -239,8 +254,8 @@ void MMU2::mmuLoop() {
             {
                 sscanf(rx_buffer, "%hhuok\n", &finda);
                 #ifdef PRUSA_MMU2_DEBUG
-                    SERIAL_ECHOPAIR("MMU => ", finda);
-                    SERIAL_ECHOLNPGM("ok'");
+//                    SERIAL_ECHOPAIR("MMU => ", finda);
+//                    SERIAL_ECHOLNPGM("ok'");
                 #endif //PRUSA_MMU2_DEBUG
 //                SERIAL_ECHOLNPAIR(PSTR("Eact: %d\n"), int(e_active()));
                 
@@ -268,16 +283,22 @@ void MMU2::mmuLoop() {
             if (rx_ok())
             {
                 #ifdef PRUSA_MMU2_DEBUG
-                    SERIAL_ECHOLNPGM("MMU => 'ok'");
+                    SERIAL_ECHOLNPGM("MMU => 'done'");
                 #endif //PRUSA_MMU2_DEBUG
                 ready = true;
                 state = 1;
+                last_cmd = MMU_CMD_NONE;
             }
             else if ((last_request + MMU_CMD_TIMEOUT) < millis())
             { //resend request after timeout (5 min)
-                #ifdef PRUSA_MMU2_DEBUG
-                    SERIAL_ECHOLNPGM("MMU => response timeout");
-                #endif //PRUSA_MMU2_DEBUG
+                if (last_cmd) {
+                    #ifdef PRUSA_MMU2_DEBUG
+                        SERIAL_ECHOLNPGM("MMU retry");
+                    #endif //PRUSA_MMU2_DEBUG
+
+                    cmd = last_cmd;
+                    last_cmd = MMU_CMD_NONE;
+                }
                 state = 1;
             }
             return;                
@@ -375,6 +396,20 @@ void MMU2::tx_str_P(const char* str) {
 /**
  * Transfer data to MMU
  */ 
+void MMU2::tx_printf_P(const char* format, int argument = -1) {
+    clear_rx_buffer();
+    uint8_t len = sprintf_P(tx_buffer, format, argument);
+
+    for (uint8_t i = 0; i < len; i++) {
+        mmuSerial.write(tx_buffer[i]);
+    }
+
+    rx_buffer[0] = '\0';
+
+    last_request = millis();
+
+}
+/*
 void MMU2::tx_printf_P(const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -391,7 +426,7 @@ void MMU2::tx_printf_P(const char* format, ...) {
     last_request = millis();
 
 }
-
+*/
 
 /**
  * Empty the rx buffer
@@ -423,10 +458,10 @@ bool MMU2::rx_ok() {
 void MMU2::checkVersion() {
  	if (buildnr < MMU_REQUIRED_FW_BUILDNR) {
         SERIAL_ERROR_START();
-        SERIAL_ERRORPGM("MMU2 firmware version invalid. Required version >= ");
-        SERIAL_ERRORLN(MMU_REQUIRED_FW_BUILDNR);
+        SERIAL_ECHOPGM("MMU2 firmware version invalid. Required version >= ");
+        SERIAL_ECHOLN(MMU_REQUIRED_FW_BUILDNR);
         kill(MSG_MMU2_WRONG_FIRMWARE);
-     }
+    }
 }
 
 
@@ -435,12 +470,25 @@ void MMU2::checkVersion() {
  */
 void MMU2::toolChange(uint8_t index) {
 
-              command(MMU_CMD_T0 + index);
+    if (index != extruder) {
+ 
+        KEEPALIVE_STATE(IN_HANDLER);
 
-              manageResponse(true, true);
+        command(MMU_CMD_T0 + index);
 
-              command(MMU_CMD_C0);
-              extruder = index; //filament change is finished
+        manageResponse(true, true);
+        KEEPALIVE_STATE(IN_HANDLER);
+
+        command(MMU_CMD_C0);
+        extruder = index; //filament change is finished
+        active_extruder = 0;
+
+        SERIAL_ECHO_START();
+        SERIAL_ECHOLNPAIR(MSG_ACTIVE_EXTRUDER, int(extruder));
+
+        KEEPALIVE_STATE(NOT_BUSY);
+    }
+
 /*
     TODO
               if (*(strchr_pointer + index) == '?')// for single material usage with mmu
@@ -458,19 +506,15 @@ void MMU2::command(uint8_t mmu_cmd) {
 
 bool MMU2::getResponse(void) {
 
-	KEEPALIVE_STATE(IN_PROCESS);
-
 	while (cmd != MMU_CMD_NONE) {
-        mmuLoop();
-		safe_delay(100);
+        idle();
 	}
 
 	while (!ready) {
-        mmuLoop();
+        idle();
 		if (state != 3) {
 			break;
         }
-		safe_delay(100);
 	}
 
 	bool ret = ready;
@@ -491,52 +535,57 @@ void MMU2::manageResponse(bool move_axes, bool turn_off_nozzle) {
 	while(!response) {
         response = getResponse(); //wait for "ok" from mmu
             
-// TODO
 		if (!response) { //no "ok" was received in reserved time frame, user will fix the issue on mmu unit
 		    if (!mmu_print_saved) { //first occurence, we are saving current position, park print head in certain position and disable nozzle heater
-/* 				  if (lcd_update_enabled) {
-					  lcd_update_was_enabled = true;
-					  lcd_update_enable(false);
-				  }
-*/                  
+
 				planner.synchronize();
  
         		mmu_print_saved = true;
-                SERIAL_ERROR_START();
-                SERIAL_ERRORPGM("MMU not responding\n");
+                SERIAL_ECHOLNPGM("MMU not responding");
 
                 resume_hotend_temp = thermalManager.degTargetHotend(active_extruder);
                 COPY(resume_position, current_position);
-                if (move_axes) {
+
+                if (move_axes && all_axes_homed()) {
                     Nozzle::park(2, park_point /*= NOZZLE_PARK_POINT*/);
                 }
+
                 if (turn_off_nozzle) {
                     //set nozzle target temperature to 0
-                    thermalManager.disable_all_heaters();
+                    thermalManager.setTargetHotend(0, active_extruder);
                 }
 			
-            }
+                LCD_MESSAGEPGM(MSG_MMU2_NOT_RESPONDING);
+                buzzer.tone(100, 659);//BUZZ(200, 40); //AlfiQue
+                buzzer.tone(200, 698);//BUZZ(200, 40); //AlfiQue
+                buzzer.tone(100, 659);//BUZZ(200, 40); //AlfiQue
+                buzzer.tone(300, 440);//BUZZ(200, 40); //AlfiQue
+                buzzer.tone(100, 659);//BUZZ(200, 40); //AlfiQue
 
-            LCD_MESSAGEPGM(MSG_MMU2_NOT_RESPONDING);
-            BUZZ(200, 40);
-            safe_delay(1000);
+                KEEPALIVE_STATE(PAUSED_FOR_USER);
+
+            }
 		}
 		else if (mmu_print_saved) {
 			SERIAL_ECHOLNPGM("MMU starts responding\n");
+            KEEPALIVE_STATE(IN_HANDLER);
+
  			  if (turn_off_nozzle) {
+                 if (resume_hotend_temp > 0.0) {
+                    thermalManager.setTargetHotend(resume_hotend_temp, active_extruder);
+                    LCD_MESSAGEPGM(MSG_HEATING);
+                    buzzer.tone(200, 40);//BUZZ(200, 40); //AlfiQue
 
-                thermalManager.setTargetHotend(resume_hotend_temp, active_extruder);
-                LCD_MESSAGEPGM(MSG_HEATING);
-                BUZZ(200, 40);
 
-				while (!thermalManager.wait_for_hotend(active_extruder, false)) {
-					safe_delay(1000);
-				}
+                    while (!thermalManager.degTargetHotend(active_extruder)) {
+                        safe_delay(1000);
+                    }
+                }
 			  }			  
-			  if (move_axes) {
+			  if (move_axes && all_axes_homed()) {
                 LCD_MESSAGEPGM(MSG_MMU2_RESUME);
-                BUZZ(200, 40);
-                BUZZ(200, 40);
+                buzzer.tone(200, 40);//BUZZ(200, 40); //AlfiQue
+                buzzer.tone(200, 40);//BUZZ(200, 40); //AlfiQue
 
                 // Move XY to starting position, then Z
                 do_blocking_move_to_xy(resume_position[X_AXIS], resume_position[Y_AXIS], NOZZLE_PARK_XY_FEEDRATE);
@@ -546,8 +595,8 @@ void MMU2::manageResponse(bool move_axes, bool turn_off_nozzle) {
 
 			  }
 			  else {
-                BUZZ(200, 40);
-                BUZZ(200, 40);
+                buzzer.tone(200, 40);//BUZZ(200, 40); //AlfiQue
+                buzzer.tone(200, 40);//BUZZ(200, 40); //AlfiQue
                 LCD_MESSAGEPGM(MSG_MMU2_RESUME);
 			  }
           }

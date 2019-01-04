@@ -23,7 +23,8 @@
 #ifndef __MMU2_H__
 #define __MMU2_H__
 
-#include "../../inc/MarlinConfig.h"
+#include "MarlinConfig.h"
+#include <stdint.h>
 
 #if ENABLED(PRUSA_MMU2)
 
@@ -62,7 +63,7 @@ class MMU2 {
     private:
         bool rx_str_P(const char* str);
         void tx_str_P(const char* str);
-        void tx_printf_P(const char* format, ...);
+        void tx_printf_P(const char* format, int argument);
         void clear_rx_buffer();
 
         bool rx_ok();
@@ -79,9 +80,9 @@ class MMU2 {
         bool ready = false;
         bool mmu_print_saved = false;
         uint8_t cmd = 0;
+        uint8_t last_cmd = 0;
         int8_t state = 0;
-        uint8_t extruder = 0;
-        uint8_t tmp_extruder = 0;
+        uint8_t extruder = 99;
         int8_t finda = -1;
         int16_t version = -1;
         int16_t buildnr = -1;

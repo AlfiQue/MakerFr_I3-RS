@@ -271,6 +271,7 @@
 #include "duration_t.h"
 #include "types.h"
 #include "parser.h"
+#include "mmu2.h"
 
 #if ENABLED(AUTO_POWER_CONTROL)
   #include "power.h"
@@ -522,7 +523,7 @@ volatile bool wait_for_heatup = true;
 #if HAS_AUTO_REPORTING || ENABLED(HOST_KEEPALIVE_FEATURE)
   bool suspend_auto_report; // = false
 #endif
-
+  
 const char axis_codes[XYZE] = { 'X', 'Y', 'Z', 'E' };
 
 #if ENABLED(HANGPRINTER)
@@ -702,6 +703,7 @@ float cartes[XYZ] = { 0 };
   #if MIXING_VIRTUAL_TOOLS > 1
     float mixing_virtual_tool_mix[MIXING_VIRTUAL_TOOLS][MIXING_STEPPERS];
   #endif
+  
 #endif
 
 static bool send_ok[BUFSIZE];
@@ -12198,11 +12200,20 @@ inline void invalid_extruder_error(const uint8_t e) {
 
   inline void mixing_tool_change(const uint8_t tmp_extruder) {
     if (tmp_extruder >= MIXING_VIRTUAL_TOOLS)
+    {
       return invalid_extruder_error(tmp_extruder);
 
     // T0-Tnnn: Switch virtual tool by changing the mix
     for (uint8_t j = 0; j < MIXING_STEPPERS; j++)
       mixing_factor[j] = mixing_virtual_tool_mix[tmp_extruder][j];
+    }
+    else if ENABLED(PRUSA_MMU2) //AlfiQue
+    {
+    UNUSED(fr_mm_s); //AlfiQue
+    UNUSED(no_move); //AlfiQue
+
+    mmu2.toolChange(tmp_extruder); //AlfiQue
+    }
   }
 
 #endif // MIXING_EXTRUDER && MIXING_VIRTUAL_TOOLS > 1
@@ -14941,6 +14952,10 @@ void idle(
     }
   #endif
 
+  #if ENABLED(PRUSA_MMU2)  //AlfiQue
+    mmu2.mmuLoop();
+  #endif  //AlfiQue
+
   #if HAS_AUTO_REPORTING
     if (!suspend_auto_report) {
       #if ENABLED(AUTO_REPORT_TEMPERATURES)
@@ -15272,6 +15287,10 @@ void setup() {
     enable_B();
     enable_C();
     enable_D();
+  #endif
+
+  #if ENABLED(PRUSA_MMU2)  //AlfiQue
+    mmu2.init();
   #endif
 
   #if ENABLED(SDSUPPORT) && DISABLED(ULTRA_LCD)

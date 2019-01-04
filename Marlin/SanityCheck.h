@@ -1708,5 +1708,11 @@ static_assert(COUNT(sanity_arr_3) <= NUM_AXIS_N, "DEFAULT_MAX_ACCELERATION has t
 #if ENABLED(PRUSA_MMU2) && DISABLED(NOZZLE_PARK_FEATURE)
   #error "PRUSA_MMU2 requires NOZZLE_PARK_FEATURE."
 #endif //AlfiQue
+#if ENABLED(PRUSA_MMU2) && DISABLED(SINGLENOZZLE)
+  #error "PRUSA_MMU2 requires SINGLENOZZLE."
+#endif
+#if ENABLED(PRUSA_MMU2) && EXTRUDERS != 5
+  #error "PRUSA_MMU2 requires EXTRUDERS = 5."
+#endif //AlfiQue
 
 #endif // _SANITYCHECK_H_

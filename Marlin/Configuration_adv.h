@@ -1652,7 +1652,7 @@
 //#define MARLIN_DEV_MODE
 
 /**
- * Prusa MMU2
+ * Prusa MMU2  //AlfiQue
  * 
  * Requires NOZZLE_PARK_FEATURE to park print head in case MMU unit fails.
  * 
@@ -1660,10 +1660,13 @@
 #define PRUSA_MMU2
 
 #ifdef PRUSA_MMU2
+  #define SINGLENOZZLE
+  #define EXTRUDERS 5
   // uart port used for serial communication to MMU
   #define ENABLE_INTERNAL_SERIAL 3
-  //#define PRUSA_MMU2_SERIAL internalSerial
-  #define PRUSA_MMU2_UART Serial3
+  #define PRUSA_MMU2_SERIAL internalSerial
+  
+  //#define PRUSA_MMU2_UART Serial2
   // use hardware reset for MMU?
   //#define PRUSA_MMU2_HWRESET <- a check AlfiQue
   #ifdef PRUSA_MMU2_HWRESET
@@ -1673,7 +1676,7 @@
 
   // enable this option if you power the MMU2 stepper motors with 12V
   // requires MMU2 Firmware V1.0.2 or later
-  //#define PRUSA_MMU2_MODE_12V
+  #define PRUSA_MMU2_MODE_12V
 
   // check MMU2 F.I.N.D.A. probe for filament runout
   #define PRUSA_MMU2_CHECK_FINDA

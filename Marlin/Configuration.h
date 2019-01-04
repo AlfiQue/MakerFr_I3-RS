@@ -101,7 +101,7 @@
  * :[0, 1, 2, 3, 4, 5, 6, 7]
  */
 #define SERIAL_PORT 0
-
+#define SERIAL_PORT_3 3
 /**
  * This setting determines the communication speed of the printer.
  *
@@ -134,13 +134,13 @@
 
 // This defines the number of extruders
 // :[1, 2, 3, 4, 5]
-#define EXTRUDERS 1 //AlfiQue
+#define EXTRUDERS 5 //AlfiQue
 
 // Generally expected filament diameter (1.75, 2.85, 3.0, ...). Used for Volumetric, Filament Width Sensor, etc.
 #define DEFAULT_NOMINAL_FILAMENT_DIA 1.75
 
 // For Cyclops or any "multi-extruder" that shares a single nozzle.
-//#define SINGLENOZZLE //AlfiQue
+#define SINGLENOZZLE //AlfiQue
 
 /**
  * Průša MK2 Single Nozzle Multi-Material Multiplexer, and variants.
@@ -152,7 +152,7 @@
  * This option only allows the multiplexer to switch on tool-change.
  * Additional options to configure custom E moves are pending.
  */
-//#define MK2_MULTIPLEXER
+#define MK2_MULTIPLEXER
 #if ENABLED(MK2_MULTIPLEXER)
   // Override the default DIO selector pins here, if needed.
   // Some pins files may provide defaults for these pins.
@@ -566,7 +566,7 @@
  * Override with M201
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 900, 900, 200, 1500 }
+#define DEFAULT_MAX_ACCELERATION      { 900, 900, 200, 10000 } //AlfiQue
 
 /**
  * Default Acceleration (change/s) change = mm/s
