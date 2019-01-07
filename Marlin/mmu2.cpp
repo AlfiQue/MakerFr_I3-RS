@@ -30,7 +30,7 @@
 
 #if ENABLED(PRUSA_MMU2)
 
-#include "mmu2.h" //AlfiQue
+#include "mmu2.h"
 #include <SoftwareSerial.h> //AlfiQue
 
 #define MMU_TODELAY 100
@@ -44,37 +44,27 @@
     #define MMU_REQUIRED_FW_BUILDNR 126
 #endif
 
-#define MMU_BAUD    115200
+#define MMU_BAUD 115200
 
-SoftwareSerial mmuSerial(15,14); // RX, TX //AlfiQue
-
-//#define ENABLE_INTERNAL_SERIAL 2
-//#define PRUSA_MMU2_SERIAL internalSerial
-
-
-//HardwareSerial mmuSerial = Serial2;
-//#define mmuSerial SERIAL3;
-//#define mmuSerial   PRUSA_MMU2_SERIAL
+SoftwareSerial mmuSerial(19,18); // RX, TX //AlfiQue
 
 
 void MMU2::init() {
 
+mmuSerial.begin(MMU_BAUD);
     #ifdef PRUSA_MMU2_HWRESET
     // TODO use macros for this
-        //WRITE(PRUSA_MMU2_RST_PIN, HIGH); //AlfiQue
-        //SET_OUTPUT(PRUSA_MMU2_RST_PIN); //AlfiQue
+        WRITE(PRUSA_MMU2_RST_PIN, HIGH);
+        SET_OUTPUT(PRUSA_MMU2_RST_PIN);
     #endif
 
-    mmuSerial.begin(MMU_BAUD);
-
+    
+delay(1000);
     SERIAL_ECHOLNPGM("MMU init");
-    mmuSerial.write("T1");
-    delay(1000);
-    mmuSerial.write("T4");
-    delay(1000);
-    SERIAL_ECHOLNPGM("MMU init end");
-
-
+    delay(5000);
+    mmu2.toolChange(3);
+    //mmuSerial.println("T3");
+    //delay(5000);
     safe_delay(10);
     reset();
     rx_buffer[0] = '\0';
@@ -86,10 +76,11 @@ void MMU2::reset() {
                 SERIAL_ECHOLNPGM("MMU <= reset");
         #endif
 
-        //WRITE(PRUSA_MMU2_RST_PIN, LOW); //AlfiQue
+    #ifdef PRUSA_MMU2_HWRESET
+        WRITE(PRUSA_MMU2_RST_PIN, LOW);
         safe_delay(20);
-        //WRITE(PRUSA_MMU2_RST_PIN, HIGH); //AlfiQue
-
+        WRITE(PRUSA_MMU2_RST_PIN, HIGH);
+    #endif
 }
 
 void MMU2::mmuLoop() {
@@ -102,6 +93,7 @@ void MMU2::mmuLoop() {
         
         case -1:
             if (rx_start()) {
+              SERIAL_ECHOLNPGM("MMU state -1 2");
                 #ifdef PRUSA_MMU2_DEBUG
                 		SERIAL_ECHOLNPGM("MMU => 'start'");
                         SERIAL_ECHOLNPGM("MMU <= 'S1'");
@@ -185,7 +177,11 @@ void MMU2::mmuLoop() {
             return;
 
         case 1:
+        SERIAL_ECHOLNPGM("MMU tool change 6");
             if (cmd) { // command request
+
+              SERIAL_ECHOLNPGM("MMU tool change 7");
+              SERIAL_ECHOLNPAIR("MMU cmd : ",cmd);
                 if ((cmd >= MMU_CMD_T0) && (cmd <= MMU_CMD_T4)) {
                     filament = cmd - MMU_CMD_T0;
                     #ifdef PRUSA_MMU2_DEBUG
@@ -326,11 +322,12 @@ bool MMU2::rx_str_P(const char* str) {
     uint8_t i = strlen(rx_buffer);
 
     while (mmuSerial.available()) {
-//        SERIAL_ECHOLNPAIR("available() ", mmuSerial.available());
+        SERIAL_ECHOLNPAIR("available() ", mmuSerial.available());//alfique
         rx_buffer[i++] = mmuSerial.read();
+        SERIAL_ECHOLNPAIR(" | ", rx_buffer);//alfique
         rx_buffer[i] = '\0';
         #ifdef PRUSA_MMU2_DEBUG
-//            SERIAL_CHAR(rx_buffer[i-1]);
+            SERIAL_CHAR(rx_buffer[i-1]);//alfique
         #endif
 
         if (i == sizeof(rx_buffer)) {
@@ -433,6 +430,7 @@ void MMU2::tx_printf_P(const char* format, ...) {
  */ 
 void MMU2::clear_rx_buffer() {
     while(mmuSerial.available() > 0) {
+      SERIAL_ECHOLNPGM("MMU ava2");
         mmuSerial.read();
     }
 
@@ -471,18 +469,18 @@ void MMU2::checkVersion() {
 void MMU2::toolChange(uint8_t index) {
 
     if (index != extruder) {
- 
-        KEEPALIVE_STATE(IN_HANDLER);
 
+        KEEPALIVE_STATE(IN_HANDLER);
         command(MMU_CMD_T0 + index);
-
+        SERIAL_ECHOLNPGM("MMU tool change 3");
         manageResponse(true, true);
+SERIAL_ECHOLNPGM("MMU tool change 3");
         KEEPALIVE_STATE(IN_HANDLER);
-
+SERIAL_ECHOLNPGM("MMU tool change 4");
         command(MMU_CMD_C0);
         extruder = index; //filament change is finished
         active_extruder = 0;
-
+SERIAL_ECHOLNPGM("MMU tool change 5");
         SERIAL_ECHO_START();
         SERIAL_ECHOLNPAIR(MSG_ACTIVE_EXTRUDER, int(extruder));
 
@@ -525,19 +523,23 @@ bool MMU2::getResponse(void) {
 
 
 void MMU2::manageResponse(bool move_axes, bool turn_off_nozzle) {
-
+SERIAL_ECHOLNPGM("MMU tool change 01");
 	bool response = false;
 	mmu_print_saved = false;
     point_t park_point = NOZZLE_PARK_POINT;
+    SERIAL_ECHOLNPGM("MMU tool change 02");
     float resume_position[XYZE];
+    SERIAL_ECHOLNPGM("MMU tool change 03");
 	float resume_hotend_temp;
-
+SERIAL_ECHOLNPGM("MMU tool change 04");
 	while(!response) {
+    SERIAL_ECHOLNPGM("MMU tool change 05");
         response = getResponse(); //wait for "ok" from mmu
             
 		if (!response) { //no "ok" was received in reserved time frame, user will fix the issue on mmu unit
+    SERIAL_ECHOLNPGM("MMU tool change 06");
 		    if (!mmu_print_saved) { //first occurence, we are saving current position, park print head in certain position and disable nozzle heater
-
+SERIAL_ECHOLNPGM("MMU tool change 07");
 				planner.synchronize();
  
         		mmu_print_saved = true;
@@ -603,9 +605,9 @@ void MMU2::manageResponse(bool move_axes, bool turn_off_nozzle) {
     }
 }
 
-void MMU2::load_to_nozzle() {
-
-}
+//void MMU2::load_to_nozzle() {
+//
+//}
 
 
 MMU2 mmu2;

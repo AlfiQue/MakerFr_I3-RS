@@ -12206,17 +12206,16 @@ inline void invalid_extruder_error(const uint8_t e) {
     // T0-Tnnn: Switch virtual tool by changing the mix
     for (uint8_t j = 0; j < MIXING_STEPPERS; j++)
       mixing_factor[j] = mixing_virtual_tool_mix[tmp_extruder][j];
-    }
-    else if ENABLED(PRUSA_MMU2) //AlfiQue
-    {
-    UNUSED(fr_mm_s); //AlfiQue
-    UNUSED(no_move); //AlfiQue
-
-    mmu2.toolChange(tmp_extruder); //AlfiQue
-    }
   }
 
 #endif // MIXING_EXTRUDER && MIXING_VIRTUAL_TOOLS > 1
+
+#if MIXING_VIRTUAL_TOOLS > 1 && ENABLED(PRUSA_MMU2) //AlfiQue
+SERIAL_ECHOLNPGM("MMU tool change 0");
+    UNUSED(fr_mm_s); //AlfiQue
+    UNUSED(no_move); //AlfiQue
+    mmu2.toolChange(tmp_extruder); //AlfiQue
+#endif
 
 #if ENABLED(DUAL_X_CARRIAGE)
 
@@ -12448,7 +12447,7 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
   #endif
 
   #if ENABLED(MIXING_EXTRUDER) && MIXING_VIRTUAL_TOOLS > 1
-
+  
     mixing_tool_change(tmp_extruder);
 
   #else // !MIXING_EXTRUDER || MIXING_VIRTUAL_TOOLS <= 1
@@ -12457,7 +12456,7 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
       return invalid_extruder_error(tmp_extruder);
 
     #if HOTENDS > 1
-
+    
       const float old_feedrate_mm_s = fr_mm_s > 0.0 ? fr_mm_s : feedrate_mm_s;
 
       feedrate_mm_s = fr_mm_s > 0.0 ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
@@ -12591,6 +12590,13 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
 
     #endif // HOTENDS <= 1
 
+//    #if ENABLED(PRUSA_MMU2) //AlfiQue
+//      SERIAL_ECHOLNPGM("MMU2 tool change");
+//      UNUSED(fr_mm_s); //AlfiQue
+//      UNUSED(no_move); //AlfiQue
+//      mmu2.toolChange(tmp_extruder); //AlfiQue
+//    #endif
+
     #if DO_SWITCH_EXTRUDER
       planner.synchronize();
       move_extruder_servo(active_extruder);
@@ -12633,7 +12639,6 @@ inline void gcode_T(const uint8_t tmp_extruder) {
     tool_change(tmp_extruder);
 
   #elif HOTENDS > 1
-
     tool_change(
       tmp_extruder,
       MMM_TO_MMS(parser.linearval('F')),
@@ -15289,12 +15294,13 @@ void setup() {
     enable_D();
   #endif
 
-  #if ENABLED(PRUSA_MMU2)  //AlfiQue
-    mmu2.init();
-  #endif
-
   #if ENABLED(SDSUPPORT) && DISABLED(ULTRA_LCD)
     card.beginautostart();
+  #endif
+
+    #if ENABLED(PRUSA_MMU2)  //AlfiQue
+    mmu2.init();
+    //mmu_init();
   #endif
 }
 
@@ -15391,6 +15397,12 @@ void loop() {
       if (++cmd_queue_index_r >= BUFSIZE) cmd_queue_index_r = 0;
     }
   }
+
+//    #if ENABLED(PRUSA_MMU2)  //AlfiQue
+//    mmu2.mmuLoop();
+////mmu_loop();
+//  #endif  //AlfiQue
+
   endstops.event_handler();
   idle();
 }
